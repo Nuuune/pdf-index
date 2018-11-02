@@ -1,6 +1,6 @@
 <template>
   <div id="app">
-    <NEWPDF/>
+    <NEWPDF ref="c_pdf"></NEWPDF>
   </div>
 </template>
 
@@ -11,6 +11,9 @@ export default {
   name: 'App',
   components: {
     NEWPDF
+  },
+  mounted () {
+    this.$root.$refs.c_pdf = this.$refs.c_pdf
   }
 }
 </script>

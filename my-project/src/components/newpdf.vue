@@ -2,7 +2,104 @@
   <div id="app">
     <el-container >
       <el-aside style='width:auto;height:950px'>
-        <el-tabs v-model="activeName" type="card">
+        <el-card v-if="opinion_show">
+          <el-row>审查意见录入</el-row>
+          <el-form
+            ref="opinionForm"
+            style="text-align: left;"
+            label-width="110px"
+            :model="opinionForm"
+            size="small"
+            >
+            <el-form-item prop="problemType" label="违反类别" :rules='{required:true,message:"该项必填"}'>
+              <el-select v-model="opinionForm.problemType" placeholder="请选择" style='width:100%'>
+                <el-option
+                  v-for="item in problemTypeOptions"
+                  :key="item.value"
+                  :label="item.label"
+                  :value="item.value">
+                </el-option>
+              </el-select>
+            </el-form-item>
+
+            <el-form-item prop="problemSubMajor" label="强标强条类型" :rules='{required:true,message:"该项必填"}'>
+              <el-select v-model="opinionForm.problemSubMajor" placeholder="请选择" style='width:100%'>
+                <el-option
+                  v-for="item in problemSubMajorOptions"
+                  :key="item.id"
+                  :label="item.subProfession"
+                  :value="item.subProfession">
+                </el-option>
+              </el-select>
+            </el-form-item>
+
+            <el-form-item prop="isHiddenDanger" label="安全隐患">
+              <el-checkbox v-model="opinionForm.isHiddenDanger" :true-label='1' :false-label='0'>是</el-checkbox>
+            </el-form-item>
+
+            <el-form-item v-if="opinionForm.isHiddenDanger" prop="dangerType" label="严重程度"  :rules='{required:true,message:"该项必填"}'>
+              <el-select v-model="opinionForm.dangerType" placeholder="请选择" style='width:100%'>
+                <el-option
+                  v-for="item in dangerTypeOptions"
+                  :key="item.value"
+                  :label="item.label"
+                  :value="item.value">
+                </el-option>
+              </el-select>
+            </el-form-item>
+            <el-form-item prop="hiddenDangerReason" label="安全说明" v-if='opinionForm.isHiddenDanger&&opinionForm.dangerType=="严重"'  :rules='{required:true,message:"该项必填"}'>
+              <el-input
+                type="textarea"
+                placeholder="请输入内容"
+                v-model="opinionForm.hiddenDangerReason">
+              </el-input>
+            </el-form-item>
+            <el-form-item prop="gbdescription" label="违反条目"  :rules='{required:true,message:"该项必填"}'>
+              <el-input
+                type="textarea"
+                :autosize="{minRows: 2, maxRows: 2}"
+                resize="none"
+                placeholder="请输入内容"
+                v-model="opinionForm.gbdescription">
+              </el-input>
+              <span>{{opinionForm.gbcaption}}</span>
+            </el-form-item>
+
+            <!-- <el-row
+              :gutter="5"
+              style="margin-bottom: 10px;">
+              <el-col :offset="3" :span="3"><el-button type="primary" size="mini" @click="">1</el-button></el-col>
+              <el-col :span="3"><el-button type="primary" size="mini" @click="">2</el-button></el-col>
+              <el-col :span="3"><el-button type="primary" size="mini" @click="">3</el-button></el-col>
+              <el-col :span="3"><el-button type="primary" size="mini" @click="">4</el-button></el-col>
+              <el-col :span="3"><el-button type="primary" size="mini" @click="">5</el-button></el-col>
+              <el-col :span="3"><el-button type="primary" size="mini" @click="">6</el-button></el-col>
+            </el-row> -->
+
+            <el-form-item prop="problemDescription" label="问题描述" >
+              <el-input
+                type="textarea"
+                resize="none"
+                :autosize="{minRows: 3, maxRows: 3}"
+                placeholder="请输入内容"
+                v-model="opinionForm.problemDescription">
+              </el-input>
+            </el-form-item>
+
+          </el-form>
+
+
+
+
+          <el-row style="text-align: center;">
+            <el-col :span="6"><el-button type="primary" size="small" @click="submitProblem_handle">保存意见</el-button></el-col>
+            <el-col :span="6"><el-button type="primary" size="small" @click="criterion_show=true">查询标准</el-button></el-col>
+            <el-col :span="6"><el-button type="primary" size="small" @click="common_show=true">常用意见</el-button></el-col>
+            <el-col :span="4" :offset="2"><el-button type="primary" size="small" @click="resetForm('opinionForm')">清空</el-button></el-col>
+          </el-row>
+
+        </el-card>
+        <el-tabs v-else v-model="activeName" type="card">
           <el-tab-pane
             name="tuzhi"
 						>
@@ -177,120 +274,17 @@
 				</el-col> -->
 				</el-row>
         <el-row >
-					<template v-if="pdf_show">
+					<!-- <template v-if="pdf_show">
 							<tablea4 :formdata="pdfdetail" ref='box5'></tablea4>
-					</template>
-					<template v-show="pdfPanel_show">
-            <div style="width:100%" id="objdiv1">
-              <object id='PDFReader' align='middle' style="left: 0px; width: 100%; top: 0px; height: 100%" classid=clsid:3BCB99FC-44E6-407A-ACE8-9E20BFAA1A0F></object>
+					</template> -->
+					<!-- <template v-show="pdfPanel_show"> -->
+            <div style="width:100%; height: 700px; background: #a3df16">
+              <object id="PDFReader" ref="PDFReader" align='middle' style="left: 0px; width: 100%; top: 0px; height: 100%" classid=clsid:3BCB99FC-44E6-407A-ACE8-9E20BFAA1A0F></object>
             </div>
-					</template>
+					<!-- </template> -->
         </el-row>
       </el-main>
     </el-container>
-    <!-- 弹窗部分 S -->
-    <el-dialog
-      title="审查意见录入"
-      :visible.sync="dialogVisible"
-      width="30%"
-      @close="closeForm('opinionForm')">
-
-      <el-form
-        ref="opinionForm"
-        style="text-align: left;"
-        label-width="110px"
-        :model="opinionForm"
-        size="small"
-				>
-        <el-form-item prop="problemType" label="违反类别" :rules='{required:true,message:"该项必填"}'>
-          <el-select v-model="opinionForm.problemType" placeholder="请选择" style='width:100%'>
-            <el-option
-              v-for="item in problemTypeOptions"
-              :key="item.value"
-              :label="item.label"
-              :value="item.value">
-            </el-option>
-          </el-select>
-        </el-form-item>
-
-        <el-form-item prop="problemSubMajor" label="强标强条类型" :rules='{required:true,message:"该项必填"}'>
-          <el-select v-model="opinionForm.problemSubMajor" placeholder="请选择" style='width:100%'>
-            <el-option
-              v-for="item in problemSubMajorOptions"
-              :key="item.id"
-              :label="item.subProfession"
-              :value="item.subProfession">
-            </el-option>
-          </el-select>
-        </el-form-item>
-
-        <el-form-item prop="isHiddenDanger" label="安全隐患">
-          <el-checkbox v-model="opinionForm.isHiddenDanger" :true-label='1' :false-label='0'>是</el-checkbox>
-        </el-form-item>
-
-        <el-form-item v-if="opinionForm.isHiddenDanger" prop="dangerType" label="严重程度"  :rules='{required:true,message:"该项必填"}'>
-          <el-select v-model="opinionForm.dangerType" placeholder="请选择" style='width:100%'>
-            <el-option
-              v-for="item in dangerTypeOptions"
-              :key="item.value"
-              :label="item.label"
-              :value="item.value">
-            </el-option>
-          </el-select>
-        </el-form-item>
-				<el-form-item prop="hiddenDangerReason" label="安全说明" v-if='opinionForm.isHiddenDanger&&opinionForm.dangerType=="严重"'  :rules='{required:true,message:"该项必填"}'>
-					<el-input
-						type="textarea"
-						placeholder="请输入内容"
-						v-model="opinionForm.hiddenDangerReason">
-					</el-input>
-				</el-form-item>
-        <el-form-item prop="gbdescription" label="违反条目"  :rules='{required:true,message:"该项必填"}'>
-          <el-input
-            type="textarea"
-            :autosize="{minRows: 2, maxRows: 2}"
-            resize="none"
-            placeholder="请输入内容"
-            v-model="opinionForm.gbdescription">
-          </el-input>
-					<span>{{opinionForm.gbcaption}}</span>
-        </el-form-item>
-
-        <!-- <el-row
-          :gutter="5"
-          style="margin-bottom: 10px;">
-          <el-col :offset="3" :span="3"><el-button type="primary" size="mini" @click="">1</el-button></el-col>
-          <el-col :span="3"><el-button type="primary" size="mini" @click="">2</el-button></el-col>
-          <el-col :span="3"><el-button type="primary" size="mini" @click="">3</el-button></el-col>
-          <el-col :span="3"><el-button type="primary" size="mini" @click="">4</el-button></el-col>
-          <el-col :span="3"><el-button type="primary" size="mini" @click="">5</el-button></el-col>
-          <el-col :span="3"><el-button type="primary" size="mini" @click="">6</el-button></el-col>
-        </el-row> -->
-
-        <el-form-item prop="problemDescription" label="问题描述" >
-          <el-input
-            type="textarea"
-            resize="none"
-            :autosize="{minRows: 3, maxRows: 3}"
-            placeholder="请输入内容"
-            v-model="opinionForm.problemDescription">
-          </el-input>
-        </el-form-item>
-
-      </el-form>
-
-
-
-      <span slot="footer" class="dialog-footer">
-        <el-row style="text-align: center;">
-          <el-col :span="6"><el-button type="primary" size="small" @click="submitProblem_handle">保存意见</el-button></el-col>
-          <el-col :span="6"><el-button type="primary" size="small" @click="criterion_show=true">查询标准</el-button></el-col>
-          <el-col :span="6"><el-button type="primary" size="small" @click="common_show=true">常用意见</el-button></el-col>
-          <el-col :span="4" :offset="2"><el-button type="primary" size="small" @click="resetForm('opinionForm')">清空</el-button></el-col>
-        </el-row>
-      </span>
-    </el-dialog>
-    <!-- 弹窗部分 E -->
 
 		<el-dialog @close='common_show=false' :visible='common_show' width='50%' title='常用标准'>
 			<el-form :model='common_form' size='small'>
@@ -374,7 +368,8 @@
   export default {
     data() {
       return {
-        pdfPanel_show: '',
+        opinion_show: false,
+        pdfPanel_show: true,
         activeName: 'tuzhi',
 				noDrawing:false,
         url:{
@@ -466,15 +461,19 @@
     },
     created() {
       // 初始化请求id
-      this.query_id = ''
+      this.query_id = this.PDFURL().query.id
+      document.cookie=`JSESSIONID=${this.PDFURL().query.session}`;
       if (this.query_id) {
         this.getParams()
         this.getzhengd()
         this.getstand()
       }
+      window.AZTBrowser.sendStatus(0, 'load');
     },
     mounted(){
-
+      this.$nextTick(() => {
+        this.initPDFComponent()
+      })
     },
 		watch:{
 			standard(){
@@ -486,6 +485,91 @@
 			}
 		},
     methods: {
+      initPDFComponent () {
+
+        this.pr = this.$refs.PDFReader;
+        const pr = this.pr;
+        const AZTBrowser = window.AZTBrowser;
+
+        // pr.SetAnnotPermission(1);
+
+        pr.SetBorderColor(86,86,86);  //设置边框颜色值
+        pr.SetTabShow(false);        //TAB是否显示
+
+        pr.SetSidebarShow(false);    //左边侧栏
+        // pr.SetToolboxShow(false);    //右边侧工具箱是否显示
+        // pr.SetDocToolbarShow(false); //文档工具栏是否显示
+
+        pr.SetAnnotTipWndShow(false,"");
+
+        pr.SetDocToolbarButtonShow(1, false, "") // 隐藏文档工具栏不需要的按钮
+        pr.SetDocToolbarButtonShow(2, false, "") // 隐藏文档工具栏不需要的按钮
+        pr.SetDocToolbarButtonShow(3, false, "") // 隐藏文档工具栏不需要的按钮
+        pr.SetDocToolbarButtonShow(4, false, "") // 隐藏文档工具栏不需要的按钮
+        pr.SetDocToolbarButtonShow(5, false, "") // 隐藏文档工具栏不需要的按钮
+        pr.SetToolboxButtonShow(1, 0, false, "") // 隐藏右边侧工具箱不需要的按钮
+        pr.SetToolboxButtonShow(2, 0, false, "") // 隐藏右边侧工具箱不需要的按钮
+        pr.SetToolboxButtonShow(4, 0, false, "") // 隐藏右边侧工具箱不需要的按钮
+        pr.SetToolboxButtonShow(5, 0, false, "") // 隐藏右边侧工具箱不需要的按钮
+
+        pr.SetAnnotPermission(4)
+
+      },
+      // PDF_onlyReader(bool) {
+      //   if (bool) {
+      //     this.pr.SetAnnotPermission(4)
+      //   } else {
+      //     this.pr.SetAnnotPermission(2)
+      //   }
+      // },
+      onPDF_addAnnot(ZSGuid, ZSType, Extend) { // pdf 添加标注后的回调
+        const pr = this.pr;
+
+        pr.SetToolboxShow(false);
+
+        this.opinion_show = true;
+        // this.PDF_onlyReader(true);
+      },
+      PDF_getCurrAnnot() { // 获取当前页面的所有标注
+        let annotXml = this.pr.GetAllAnnotInfo("");
+        const reg = /(<annot>(?:.*?)<\/annot>)/g;
+        const regx = /<GUID>(.*?)<\/GUID>/g;
+        annotXml = annotXml.replace(/\n|\t|\r/gm, '');
+        let annotXmlMap = {};
+        annotXml.replace(reg, function(match, p1){
+          p1.replace(regx, function(m, p) {
+            annotXmlMap[`${p}`] = p1;
+            return m
+          })
+          return match;
+        });
+        return annotXmlMap;
+      },
+      PDFOpenFile ({pdfurl, pdfname}) { // 打开pdf文件
+        const pr = this.pr;
+        pr.CloseFile(-1) // 先关闭所有文件
+        pr.OpenFile(2,`http://47.99.36.241/upload/${pdfurl}`,"","");
+        pr.SetDocName(pdfname)
+        pr.SetReadZoom(-1) // 设置适合宽度
+      },
+      PDFURL() {
+  			const URL = window.location.href
+  			const arr = URL.split('?')
+  			const hash = arr[0]
+  			let query = arr[1]?arr[1]:''
+  			const qus = {}
+  			if(query){
+  				query = query.split('&');
+  				for(let n=0; n<query.length; n++){
+  					let hs = query[n].split('=');
+  					qus[hs[0]]=hs[1]?hs[1]:'';
+					}
+				}
+				return {
+					query:qus,
+					url:hash
+				}
+			},
 			selectDrp(data){
 				let list  = ['caption','chapter',	'content','contenttype','no','sdcno','stdid','topicaltype']
 				let form = {};
@@ -741,6 +825,7 @@
 				}).catch(()=>{})
 			},
       selectTreeID(data, node, self){
+
 				if(data.children&&data.children.length&&data.children[0].profession){
 					this.getpdfdetail(data.children[0].id)
 				}else{
@@ -783,6 +868,8 @@
           this.opinionForm.drawingNumber = data.id;
           this.showInfo = true;
 
+          this.currpdf_name = data.name;
+
           this.getProblems(data.id).then(
             (resp) => {
               console.log('getProblems success');
@@ -821,12 +908,13 @@
               } else {
                 console.log('getProblems fail');
               }
-
+              // this.iframe_url = '/static/web/viewer.html?file=http://47.99.36.241/upload'+window.decodeURIComponent(data.url);
+              this.PDFOpenFile({pdfurl: window.encodeURIComponent(data.url), pdfname: this.currpdf_name})
             },
             (err) => {
               console.log('getProblems fail');
               console.log(err);
-              this.iframe_url = '/static/web/viewer.html?file=http://47.99.36.241/upload'+window.decodeURIComponent(data.url);
+              this.PDFOpenFile({pdfurl: window.encodeURIComponent(data.url), pdfname: this.currpdf_name})
             }
           );
 
@@ -842,9 +930,11 @@
             datas.push(res.data.result);
             this.tree.data = datas;console.log(datas)
           } else {
+            alert(JSON.stringify(data))
             this.$message.error('查询失败，请联系管理员');
           }
         },(error)=>{
+          alert(JSON.stringify(error))
           this.$message.error('查询失败，请联系管理员');
         })
       },

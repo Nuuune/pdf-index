@@ -19,90 +19,31 @@
           str += 'colno: ' + colno + '\n';
           str += 'error: ' + error + '\n';
           alert(str);
+          AZTBrowser.sendStatus(1, 'err')
         }
 
         window.onerror = windowonerror;
-
-
-        var pr;
-        var g_guid = "";
-        function LoadPage() {
-
-          pr = document.getElementById("PDFReader");
-
-
-
-          pr.SetBorderColor(86,86,86);  //设置边框颜色值
-          pr.SetTabShow(true);        //TAB是否显示
-
-          pr.SetSidebarShow(false);    //左边侧栏
-          // pr.SetToolboxShow(false);    //右边侧工具箱是否显示
-          // pr.SetDocToolbarShow(false); //文档工具栏是否显示
-
-          pr.SetAnnotTipWndShow(false,"");
-
-          pr.SetDocToolbarButtonShow(1, false, "") // 隐藏文档工具栏不需要的按钮
-          pr.SetDocToolbarButtonShow(2, false, "") // 隐藏文档工具栏不需要的按钮
-          pr.SetDocToolbarButtonShow(3, false, "") // 隐藏文档工具栏不需要的按钮
-          pr.SetDocToolbarButtonShow(4, false, "") // 隐藏文档工具栏不需要的按钮
-          pr.SetDocToolbarButtonShow(5, false, "") // 隐藏文档工具栏不需要的按钮
-          pr.SetToolboxButtonShow(1, 0, false, "") // 隐藏右边侧工具箱不需要的按钮
-          pr.SetToolboxButtonShow(2, 0, false, "") // 隐藏右边侧工具箱不需要的按钮
-          pr.SetToolboxButtonShow(4, 0, false, "") // 隐藏右边侧工具箱不需要的按钮
-          pr.SetToolboxButtonShow(5, 0, false, "") // 隐藏右边侧工具箱不需要的按钮
-
-                //pr.SetAnnotTipWndShow(false,"");  // 隐藏图形注释的弹出框
-
-          //pr.SetAnnotAuthor("liushixue"); //设置批注作者
-          //pr.SetAnnotPermission(2);       //设置批注访问权限
-
-          try{	AZTBrowser.sendStatus(0, 'load');
-              function PDFURL(){
-                var URL = location.href;
-                var arr = URL.split('?'),
-                hash = arr[0],
-                query = arr[1]?arr[1]:'',
-                qus = {};
-                if(query){
-                  query = query.split('&');
-                  for(var n=0; n<query.length; n++){
-                    var hs = query[n].split('=');
-                    qus[hs[0]]=hs[1]?hs[1]:'';
-                    }
-                  }
-                return {
-                  query:qus,
-                  url:hash
-                }
-              };
-              var pdf_name = PDFURL().query.url.split('/');
-              pdf_name = decodeURIComponent(pdf_name[pdf_name.length - 1])
-          //			var data = JSON.parse(PDFURL().query.data)	;
-              pr.OpenFile(2,"http://47.99.36.241/upload"+PDFURL().query.url,"","");
-              pr.SetDocName(pdf_name)
-              pr.SetReadZoom(-1) // 设置适合宽度
-          }catch(err){alert(err)
-              AZTBrowser.sendStatus(1, 'err')
-          }
-        }
     </script>
   </head>
   <body>
-    <!-- <SCRIPT LANGUAGE=javascript FOR=PDFReader EVENT=Event_AddAnnot(ZSGuid,ZSType,Extend)>     //添加注释后事件
-      alert("添加注释GUID："+ZSGuid+"类型："+ZSType +"Extend:"+Extend);
-      g_guid = ZSGuid;
+    <SCRIPT LANGUAGE=javascript FOR=PDFReader EVENT=Event_AddAnnot(ZSGuid,ZSType,Extend)>     //添加注释后事件
+
+      window.myVue.$refs.c_pdf.onPDF_addAnnot(ZSGuid, ZSType, Extend)
+
     </SCRIPT>
 
    <SCRIPT LANGUAGE=javascript FOR=PDFReader EVENT=Event_SelectAnnot(ZSGuid,ZSType,Extend)>
+      // alert(JSON.stringify(window.myVue))
       alert("选中注释GUID："+ZSGuid+"类型："+ZSType);
-      g_guid = ZSGuid;
+      // g_guid = ZSGuid;
     </SCRIPT>
 
 
     <SCRIPT LANGUAGE=javascript FOR=PDFReader EVENT=Event_DeleteAnnot(ZSGuid,ZSType,Extend)>
+      // alert(JSON.stringify(window.myVue))
       alert("删除注释GUID："+ZSGuid+"类型："+ZSType);
-      g_guid = ZSGuid;
-    </SCRIPT> -->
+      // g_guid = ZSGuid;
+    </SCRIPT>
 
 
 

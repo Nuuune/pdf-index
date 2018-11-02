@@ -6,34 +6,56 @@ const path = require('path')
 
 module.exports = {
   dev: {
-
-    // Paths
+    env: require('./dev.env.js'),
+    port: 8088,
+    autoOpenBrowser: false,
     assetsSubDirectory: 'static',
     assetsPublicPath: '/',
-    proxyTable: {},
-
-    // Various Dev Server settings
-    host: 'localhost', // can be overwritten by process.env.HOST
-    port: 8080, // can be overwritten by process.env.PORT, if port is in use, a free one will be determined
-    autoOpenBrowser: false,
-    errorOverlay: true,
-    notifyOnErrors: true,
-    poll: false, // https://webpack.js.org/configuration/dev-server/#devserver-watchoptions-
-
-    
-    /**
-     * Source Maps
-     */
-
-    // https://webpack.js.org/configuration/devtool/#development
-    devtool: 'cheap-module-eval-source-map',
-
-    // If you have problems debugging vue-files in devtools,
-    // set this to false - it *may* help
-    // https://vue-loader.vuejs.org/en/options.html#cachebusting
-    cacheBusting: true,
-
-    cssSourceMap: true
+    proxyTable: {
+//       '/censor':{
+//         target:'http://192.168.0.109:8080/',
+//         pathRewrite:{
+//         changeOrigin:true,
+//           '^/censor':'/censor/censor/v1'
+//         }
+//       },
+//       '/design':{
+//         target:'http://192.168.0.109:8080/',
+//         changeOrigin:true,
+//         pathRewrite:{
+//           '^/design':'/design/design/v1'
+//         }
+//       },
+//       '/draw':{
+//         target:'http://192.168.0.109:8080/',
+//         changeOrigin:true,
+//         pathRewrite:{
+//           '^/draw':'/draw/draw/v1'
+//         }
+//       },
+     '/censor':{
+        target:'http://47.99.36.241/',
+        changeOrigin:true,
+   //         pathRewrite:{
+   //           '^/censor':'/censor/v1'
+   //         }
+      },
+      '/design':{
+        target:'http://47.99.36.241/',
+        changeOrigin:true,
+   //         pathRewrite:{
+   //           '^/design':'/design/v1'
+   //         }
+      },
+      '/draw':{
+        target:'http://47.99.36.241/',
+        changeOrigin:true,
+   //         pathRewrite:{
+   //           '^/draw':'/draw/v1'
+   //         }
+      }
+    },
+    cssSourceMap: false
   },
 
   build: {
@@ -43,7 +65,7 @@ module.exports = {
     // Paths
     assetsRoot: path.resolve(__dirname, '../dist'),
     assetsSubDirectory: 'static',
-    assetsPublicPath: '/',
+    assetsPublicPath: './',
 
     /**
      * Source Maps

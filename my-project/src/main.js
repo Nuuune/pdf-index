@@ -19,8 +19,17 @@ Vue.use(VueResource);
 
 Vue.use(ElementUI);
 
+
+Vue.http.interceptors.push(function(request, next) {//拦截器
+  // 跨域携带cookie
+  request.credentials = true;
+
+  next()
+})
+
+
 /* eslint-disable no-new */
-new Vue({
+window.myVue = new Vue({
   el: '#app',
   components: { App },
   template: '<App/>'
