@@ -371,7 +371,8 @@
   export default {
     data() {
       return {
-        problemMap: {},
+        problemMap: {}, // 当前pdf的问题 以guid为索引
+        xmlMap: {}, // 当前pdf的问题标注 以guid为索引
         PDFReader_show: true,
         opinion_show: false,
         pdfPanel_show: true,
@@ -567,6 +568,8 @@
                     problemDescription,projectId:item.id,gbcaption,hiddenDangerReason
                   }
 
+                  this.xmlMap[guid] = item.annotXml
+
                 })
 
                 xml_init = `<root>${xml_init}</root>`;
@@ -596,6 +599,28 @@
         this.opinion_show = true;
         this.activeGUID = ZSGuid;
         // this.PDF_onlyReader(true);
+      },
+      onPDF_closeFile(IsSucceed,FilePath,PDFID,Extend) { // pdf 文件关闭回调
+        this.opinion_show = false;
+        this.activeGUID = '';
+        this.problemMap = {};
+        this.xmlMap = {};
+      },
+      onPDF_deleteAnnot(ZSGuid, ZSType, Extend) {
+        let ids = [this.problemMap[ZSGuid].projectId]
+        try {
+          this.$http.post(this.url.alldelete,ids).then(res=>{
+            if(res.body.status == 200){
+              alert('删除成功')
+              this.getzhengd()
+            }else{
+              alert('错误:' + res.body.message)
+            }
+          })
+        } catch (e) {
+          alert(e.stack)
+        }
+
       },
       PDF_getCurrAnnot() { // 获取当前页面的所有标注
         let annotXml = this.pr.GetAllAnnotInfo("");
@@ -681,6 +706,7 @@
 						ids.push(item.id)
 					})
 				}
+        this.PDFReader_show = false;
 				this.$confirm('您确定要删除所选的内容吗?','提示').then(re=>{
 					this.$http.post(this.url.alldelete,ids).then(res=>{
 						if(res.body.status == 200){
@@ -689,12 +715,14 @@
 								message:'删除成功'
 							})
 							this.getzhengd()
+              this.PDFReader_show = true;
 						}else{
 							this.$message({
 								type:'warning',
 								message:'错误:'+res.body.message,
 								showClose:true
 							})
+              this.PDFReader_show = true;
 						}
 					})
 				}).catch(re=>{})

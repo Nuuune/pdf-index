@@ -38,17 +38,23 @@
 
     </SCRIPT>
 
-   <SCRIPT LANGUAGE=javascript FOR=PDFReader EVENT=Event_SelectAnnot(ZSGuid,ZSType,Extend)> // 选中注释事件
+    <SCRIPT LANGUAGE=javascript FOR=PDFReader EVENT=Event_SelectAnnot(ZSGuid,ZSType,Extend)> // 选中注释事件
 
       window.myVue.$refs.c_pdf.onPDF_selectAnnot(ZSGuid, ZSType, Extend)
-    
+
     </SCRIPT>
 
 
-    <SCRIPT LANGUAGE=javascript FOR=PDFReader EVENT=Event_DeleteAnnot(ZSGuid,ZSType,Extend)>
-      // alert(JSON.stringify(window.myVue))
-      alert("删除注释GUID："+ZSGuid+"类型："+ZSType);
-      // g_guid = ZSGuid;
+    <SCRIPT LANGUAGE=javascript FOR=PDFReader EVENT=Event_DeleteAnnot(ZSGuid,ZSType,Extend)> // 删除注释事件
+
+      window.myVue.$refs.c_pdf.onPDF_deleteAnnot(ZSGuid, ZSType, Extend)
+
+    </SCRIPT>
+
+    <SCRIPT LANGUAGE=javascript FOR=PDFReader EVENT=Event_CloseFile(IsSucceed,FilePath,PDFID,Extend)> // 文件关闭事件
+
+      window.myVue.$refs.c_pdf.onPDF_closeFile(IsSucceed, FilePath, PDFID, Extend)
+
     </SCRIPT>
 
 
