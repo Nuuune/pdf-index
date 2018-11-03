@@ -26,16 +26,22 @@
     </script>
   </head>
   <body>
-    <SCRIPT LANGUAGE=javascript FOR=PDFReader EVENT=Event_AddAnnot(ZSGuid,ZSType,Extend)>     //添加注释后事件
+    <SCRIPT LANGUAGE=javascript FOR=PDFReader EVENT=Event_AddAnnot(ZSGuid,ZSType,Extend)>     // 添加注释后事件
 
       window.myVue.$refs.c_pdf.onPDF_addAnnot(ZSGuid, ZSType, Extend)
 
     </SCRIPT>
 
-   <SCRIPT LANGUAGE=javascript FOR=PDFReader EVENT=Event_SelectAnnot(ZSGuid,ZSType,Extend)>
-      // alert(JSON.stringify(window.myVue))
-      alert("选中注释GUID："+ZSGuid+"类型："+ZSType);
-      // g_guid = ZSGuid;
+    <SCRIPT LANGUAGE=javascript FOR=PDFReader EVENT=Event_OpenFile(IsSucceed,FilePath,PDFID,Extend)>     // 文档打开事件
+
+      window.myVue.$refs.c_pdf.onPDF_openFile(IsSucceed, FilePath, PDFID, Extend)
+
+    </SCRIPT>
+
+   <SCRIPT LANGUAGE=javascript FOR=PDFReader EVENT=Event_SelectAnnot(ZSGuid,ZSType,Extend)> // 选中注释事件
+
+      window.myVue.$refs.c_pdf.onPDF_selectAnnot(ZSGuid, ZSType, Extend)
+    
     </SCRIPT>
 
 

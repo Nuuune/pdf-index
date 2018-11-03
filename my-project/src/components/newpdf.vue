@@ -91,11 +91,14 @@
 
 
 
-          <el-row style="text-align: center;">
-            <el-col :span="6"><el-button type="primary" size="small" @click="submitProblem_handle">保存意见</el-button></el-col>
-            <el-col :span="6"><el-button type="primary" size="small" @click="criterion_show=true">查询标准</el-button></el-col>
-            <el-col :span="6"><el-button type="primary" size="small" @click="common_show=true">常用意见</el-button></el-col>
-            <el-col :span="4" :offset="2"><el-button type="primary" size="small" @click="resetForm('opinionForm')">清空</el-button></el-col>
+          <el-row :gutter="20" style="text-align: center;">
+            <el-col :span="6"><el-button type="primary" size="mini" @click="submitProblem_handle">保存意见</el-button></el-col>
+            <el-col :span="6"><el-button type="primary" size="mini" @click="criterion_show=true">查询标准</el-button></el-col>
+            <el-col :span="6"><el-button type="primary" size="mini" @click="common_show=true">常用意见</el-button></el-col>
+          </el-row>
+          <el-row :gutter="20" style="text-align: center; margin-top: 10px">
+            <el-col :span="6"><el-button type="primary" size="mini" @click="resetForm('opinionForm')">清空表单</el-button></el-col>
+            <el-col :span="6"><el-button type="primary" size="mini" @click="opinion_show=false">返回目录</el-button></el-col>
           </el-row>
 
         </el-card>
@@ -278,8 +281,8 @@
 							<tablea4 :formdata="pdfdetail" ref='box5'></tablea4>
 					</template> -->
 					<!-- <template v-show="pdfPanel_show"> -->
-            <div style="width:100%; height: 700px; background: #a3df16">
-              <object id="PDFReader" ref="PDFReader" align='middle' style="left: 0px; width: 100%; top: 0px; height: 100%" classid=clsid:3BCB99FC-44E6-407A-ACE8-9E20BFAA1A0F></object>
+            <div style="width:100%; height: 700px; background: #2b2d26">
+              <object v-if="PDFReader_show" id="PDFReader" ref="PDFReader" align='middle' style="left: 0px; width: 100%; top: 0px; height: 100%" classid=clsid:3BCB99FC-44E6-407A-ACE8-9E20BFAA1A0F></object>
             </div>
 					<!-- </template> -->
         </el-row>
@@ -368,6 +371,8 @@
   export default {
     data() {
       return {
+        problemMap: {},
+        PDFReader_show: true,
         opinion_show: false,
         pdfPanel_show: true,
         activeName: 'tuzhi',
@@ -448,7 +453,6 @@
 				showexport:false,
 				self_wensdata:[],
 				other_wensdata:[]
-
       };
     },
 		components:{
@@ -482,7 +486,13 @@
 			stdid(){
 				this.stand_search = '';
 				this.getstandData()
-			}
+			},
+      common_show(cv) {
+        this.PDFReader_show = !cv
+      },
+      criterion_show(cv) {
+        this.PDFReader_show = !cv
+      }
 		},
     methods: {
       initPDFComponent () {
@@ -512,22 +522,79 @@
         pr.SetToolboxButtonShow(4, 0, false, "") // 隐藏右边侧工具箱不需要的按钮
         pr.SetToolboxButtonShow(5, 0, false, "") // 隐藏右边侧工具箱不需要的按钮
 
-        pr.SetAnnotPermission(4)
+        // pr.SetAnnotPermission(4)
 
       },
-      // PDF_onlyReader(bool) {
-      //   if (bool) {
-      //     this.pr.SetAnnotPermission(4)
-      //   } else {
-      //     this.pr.SetAnnotPermission(2)
-      //   }
-      // },
-      onPDF_addAnnot(ZSGuid, ZSType, Extend) { // pdf 添加标注后的回调
-        const pr = this.pr;
+      PDF_onlyReader(bool) {
+        if (bool) {
+          this.pr.SetAnnotPermission(4)
+        } else {
+          this.pr.SetAnnotPermission(2)
+        }
+      },
+      onPDF_openFile(IsSucceed, FilePath, PDFID, Extend) { // pdf 文件打开的回调
 
-        pr.SetToolboxShow(false);
+        if (IsSucceed) {
+          this.getProblems(this.opinionForm.drawingNumber).then(
+            (resp) => {
+              if (resp.data && resp.data.status == 200) {
+                // 初始化svg数组
+                // alert(JSON.stringify(resp.data.result))
 
+                const regx = /<GUID>(.*?)<\/GUID>/g;
+
+                let xml_init = ''
+
+                resp.data.result.forEach(item => {
+
+                  xml_init += item.annotXml
+                  let guid =  ''
+
+                  item.annotXml.replace(regx, function(m, p) {
+                    guid = p
+                    return m
+                  })
+
+                  const { drawingX, drawingY, isHiddenDanger,
+                    problemType, problemSubMajor, dangerType, gbdescription,
+                    problemDescription, id,gbcaption,hiddenDangerReason
+                  } = item;
+
+
+                  this.problemMap[guid] = {
+                    isHiddenDanger,
+                    problemType, problemSubMajor, dangerType,  gbdescription,
+                    problemDescription,projectId:item.id,gbcaption,hiddenDangerReason
+                  }
+
+                })
+
+                xml_init = `<root>${xml_init}</root>`;
+                this.pr.AddAnnot(3, xml_init, "");
+
+              } else {
+                alert('getProblems fail')
+                console.log('getProblems fail');
+              }
+            },
+            (err) => {
+              alert('getProblems fail')
+              console.log('getProblems fail');
+              console.log(err);
+            }
+          );
+        }
+      },
+      onPDF_selectAnnot(ZSGuid, ZSType, Extend) { // pdf 注释选择后的回调
         this.opinion_show = true;
+        this.activeGUID = ZSGuid;
+        let problem = this.problemMap[ZSGuid];
+        if (problem) this.opinionForm = problem;
+      },
+      onPDF_addAnnot(ZSGuid, ZSType, Extend) { // pdf 添加标注后的回调
+        this.pr.SetToolboxShow(false);
+        this.opinion_show = true;
+        this.activeGUID = ZSGuid;
         // this.PDF_onlyReader(true);
       },
       PDF_getCurrAnnot() { // 获取当前页面的所有标注
@@ -727,51 +794,56 @@
         this.dialogVisible = true;
       },
       submitProblem_handle() {
+        const pr = this.pr
 				this.$refs.opinionForm.validate((valid) =>{
 					if(valid){
-						let svg, index;
-						        for(let i = 0; i < window._svgArr.length; i++) {
-						          if (window._svgArr[i].id == window._dbID) {
-						            svg = window._svgArr[i];
-						            index = i;
-						            break;
-						          }
-						        }
-						        const drawingData = {
-						          drawingX: svg.x,
-						          drawingY: svg.y,
-						          annotXml: JSON.stringify({
-						            width: svg.width,
-						            height: svg.height
-						          })
-						        }
-						        const data = Object.assign({}, this.opinionForm, drawingData, {isHiddenDanger: this.opinionForm.isHiddenDanger ? 1 : 0});
+						let index;
+
+				        const drawingData = {
+				          annotXml: this.PDF_getCurrAnnot()[this.activeGUID]
+				        }
+				        const data = Object.assign({}, this.opinionForm, drawingData, {isHiddenDanger: this.opinionForm.isHiddenDanger ? 1 : 0});
 
 
-										if(data.projectId){
-											this.problemSave(data).then(
-											(resp) => {
-												window._svgArr[index].form = Object.assign({}, this.opinionForm);
-												this.resetForm('opinionForm');
-												this.dialogVisible = false;
-												this.getzhengd()
-												},
-												(err) => {
-												this.dialogVisible = false;
-												}
-											);
-										}else{
-											this.problemSubmit(data).then(
-						          (resp) => {
-						            window._svgArr[index].form = Object.assign({}, this.opinionForm);
-						            this.dialogVisible = false;
-												this.getzhengd()
-												},
-												(err) => {
-						            this.dialogVisible = false;
-												}
-											);
+								if(data.projectId){
+									this.problemSave(data).then(
+										(resp) => {
+                      alert(JSON.stringify(resp))
+											this.resetForm('opinionForm');
+                      pr.SetToolboxShow(true);
+                      this.opinion_show = false;
+                      this.activeGUID = '';
+                      // this.PDF_onlyReader(false);
+											this.getzhengd();
+										},
+										(err) => {
+                      alert(JSON.stringify(err))
+                      pr.SetToolboxShow(true);
+                      this.opinion_show = false;
+                      this.activeGUID = '';
+                      // this.PDF_onlyReader(false);
 										}
+									);
+								}else{
+									this.problemSubmit(data).then(
+					          (resp) => {
+                      alert(JSON.stringify(resp))
+                      this.resetForm('opinionForm');
+                      pr.SetToolboxShow(true);
+                      this.opinion_show = false;
+                      this.activeGUID = '';
+                      // this.PDF_onlyReader(false);
+					            this.getzhengd();
+										},
+										(err) => {
+                      alert(JSON.stringify(err))
+                      pr.SetToolboxShow(true);
+                      this.opinion_show = false;
+                      this.activeGUID = '';
+                      // this.PDF_onlyReader(false);
+										}
+									);
+								}
 					}else{
 						return false
 					}
@@ -869,55 +941,7 @@
           this.showInfo = true;
 
           this.currpdf_name = data.name;
-
-          this.getProblems(data.id).then(
-            (resp) => {
-              console.log('getProblems success');
-              console.log(resp);
-              if (resp.data && resp.data.status == 200) {
-                // 初始化svg数组
-                resp.data.result.forEach(item => {
-                  let annotXml;
-                  try {
-                    annotXml = JSON.parse(item.annotXml);
-                  } catch (e) {
-                    return ;
-                  }
-
-                  if (!annotXml.width && annotXml.width != 0) {
-                    return ;
-                  }
-                  const { drawingX, drawingY, isHiddenDanger,
-                    problemType, problemSubMajor, dangerType, gbdescription,
-                    problemDescription, id,gbcaption,hiddenDangerReason
-                  } = item;
-
-                  const svg = {
-                    id: window.maxId++,
-                    x: drawingX,
-                    y: drawingY,
-                    width: annotXml.width,
-                    height: annotXml.height,
-                    form: {
-                      isHiddenDanger,
-                      problemType, problemSubMajor, dangerType,  gbdescription,
-                      problemDescription,projectId:item.id,gbcaption,hiddenDangerReason
-                    }
-                  };
-                })
-              } else {
-                console.log('getProblems fail');
-              }
-              // this.iframe_url = '/static/web/viewer.html?file=http://47.99.36.241/upload'+window.decodeURIComponent(data.url);
-              this.PDFOpenFile({pdfurl: window.encodeURIComponent(data.url), pdfname: this.currpdf_name})
-            },
-            (err) => {
-              console.log('getProblems fail');
-              console.log(err);
-              this.PDFOpenFile({pdfurl: window.encodeURIComponent(data.url), pdfname: this.currpdf_name})
-            }
-          );
-
+          this.PDFOpenFile({pdfurl: window.encodeURIComponent(data.url), pdfname: this.currpdf_name})
 				}
       },
       query(){
