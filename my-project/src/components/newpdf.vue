@@ -98,7 +98,7 @@
           </el-row>
           <el-row :gutter="20" style="text-align: center; margin-top: 10px">
             <el-col :span="6"><el-button type="primary" size="mini" @click="resetForm('opinionForm')">清空表单</el-button></el-col>
-            <el-col :span="6"><el-button type="primary" size="mini" @click="opinion_show=false">返回目录</el-button></el-col>
+            <el-col :span="6"><el-button type="primary" size="mini" @click="goTree">返回目录</el-button></el-col>
           </el-row>
 
         </el-card>
@@ -495,7 +495,6 @@
         this.PDFReader_show = !cv
       },
       noDrawing(cv) {
-        console.log(cv)
         this.PDF_onlyReader(cv)
       }
 		},
@@ -516,7 +515,7 @@
         pr.SetTabShow(false);        //TAB是否显示
 
         pr.SetSidebarShow(false);    //左边侧栏
-        // pr.SetToolboxShow(false);    //右边侧工具箱是否显示
+        pr.SetToolboxShow(true);    //右边侧工具箱是否显示
         // pr.SetDocToolbarShow(false); //文档工具栏是否显示
 
         pr.SetAnnotTipWndShow(false,"");
@@ -543,13 +542,14 @@
         }
       },
       _render_pdfProblem (id) {
-        console.log(`id-------------${id}`)
         this.getProblems(id).then(
           (resp) => {
             if (resp.data && resp.data.status == 200) {
               // 初始化
               this.problemMap = {};
               this.xmlMap = {};
+              console.log(this.problemMap)
+              console.log(this.xmlMap)
               const regx = /<GUID>(.*?)<\/GUID>/g;
 
               let xml_init = ''
@@ -601,8 +601,14 @@
       onPDF_selectAnnot(ZSGuid, ZSType, Extend) { // pdf 注释选择后的回调
         this.opinion_show = true;
         this.activeGUID = ZSGuid;
+        this.pr.SetToolboxShow(false)
         let problem = this.problemMap[ZSGuid];
         if (problem) this.opinionForm = problem;
+      },
+      goTree() {
+        this.resetForm();
+        this.opinion_show = false;
+        this.pr.SetToolboxShow(true);
       },
       onPDF_addAnnot(ZSGuid, ZSType, Extend) { // pdf 添加标注后的回调
         this.pr.SetToolboxShow(false);
@@ -846,11 +852,11 @@
 
 
 								if(data.projectId){
+
 									this.problemSave(data).then(
 										(resp) => {
-                      alert(JSON.stringify(resp))
-
-											this.resetForm('opinionForm');
+                      this._render_pdfProblem(this._drawingNumber);
+                      this.resetForm();
                       pr.SetToolboxShow(true);
                       this.opinion_show = false;
                       this.activeGUID = '';
@@ -858,7 +864,6 @@
 											this.getzhengd();
 										},
 										(err) => {
-                      alert(JSON.stringify(err))
                       pr.SetToolboxShow(true);
                       this.opinion_show = false;
                       this.activeGUID = '';
@@ -866,10 +871,11 @@
 										}
 									);
 								}else{
+                
 									this.problemSubmit(data).then(
 					          (resp) => {
-                      alert(JSON.stringify(resp))
-                      this.resetForm('opinionForm');
+                      this._render_pdfProblem(this._drawingNumber);
+                      this.resetForm();
                       pr.SetToolboxShow(true);
                       this.opinion_show = false;
                       this.activeGUID = '';
@@ -877,7 +883,6 @@
 					            this.getzhengd();
 										},
 										(err) => {
-                      alert(JSON.stringify(err))
                       pr.SetToolboxShow(true);
                       this.opinion_show = false;
                       this.activeGUID = '';
@@ -943,7 +948,6 @@
 				// }else{
 				// 	this.pdf_show = false
 				// };
-				    console.log(node)
         this.clickedNodeData = data;
 				if(data.children && data.children.length && data.children[0].type == 'archive'){
 					this.clickedNodeData.checkOnReson = data.children[0].checkOnReson
@@ -979,6 +983,7 @@
           }
           this.PDFReader_show = true;
           this.opinionForm.drawingNumber = data.id;
+          this._drawingNumber = data.id;
           this.showInfo = true;
           this.currpdf_name = data.name;
           this.PDFOpenFile({pdfurl: window.encodeURIComponent(data.url), pdfname: this.currpdf_name})
@@ -1066,7 +1071,6 @@
       },
       loaded() {
         const vm = this.$refs.iframe.contentWindow.vm;
-        console.log(vm)
         //vm.func1()
       },
       getParams () {
