@@ -282,7 +282,7 @@
 					</template> -->
 					<!-- <template v-show="pdfPanel_show"> -->
             <div style="width:100%; height: 700px; background: #2b2d26">
-              <object v-if="PDFReader_show" id="PDFReader" ref="PDFReader" align='middle' style="left: 0px; width: 100%; top: 0px; height: 100%" classid=clsid:3BCB99FC-44E6-407A-ACE8-9E20BFAA1A0F></object>
+              <object  id="PDFReader" ref="PDFReader" align='middle' :style="{display: PDFReader_show ? 'block' : 'none'}" style="left: 0px; width: 100%; top: 0px; height: 100%" classid=clsid:3BCB99FC-44E6-407A-ACE8-9E20BFAA1A0F></object>
             </div>
 					<!-- </template> -->
         </el-row>
@@ -467,13 +467,13 @@
     created() {
       // 初始化请求id
       this.query_id = this.PDFURL().query.id
-      document.cookie=`JSESSIONID=${this.PDFURL().query.session}`;
+      document.cookie=`JSESSIONID=${this.PDFURL().query.session};path=/draw;`;
       if (this.query_id) {
         this.getParams()
         this.getzhengd()
         this.getstand()
       }
-      window.AZTBrowser.sendStatus(0, 'load');
+      AZTBrowser.sendStatus(0, 'load');
     },
     mounted(){
       this.$nextTick(() => {
@@ -493,6 +493,10 @@
       },
       criterion_show(cv) {
         this.PDFReader_show = !cv
+      },
+      noDrawing(cv) {
+        console.log(cv)
+        this.PDF_onlyReader(cv)
       }
 		},
     methods: {
@@ -503,6 +507,10 @@
         const AZTBrowser = window.AZTBrowser;
 
         // pr.SetAnnotPermission(1);
+
+
+        // pr.SetAnnotPermission(4)
+
 
         pr.SetBorderColor(86,86,86);  //设置边框颜色值
         pr.SetTabShow(false);        //TAB是否显示
@@ -523,69 +531,71 @@
         pr.SetToolboxButtonShow(4, 0, false, "") // 隐藏右边侧工具箱不需要的按钮
         pr.SetToolboxButtonShow(5, 0, false, "") // 隐藏右边侧工具箱不需要的按钮
 
-        // pr.SetAnnotPermission(4)
-
+        this.PDFReader_show = false
       },
       PDF_onlyReader(bool) {
         if (bool) {
           this.pr.SetAnnotPermission(4)
+          this.pr.SetToolboxShow(false)
         } else {
           this.pr.SetAnnotPermission(2)
+          this.pr.SetToolboxShow(true)
         }
       },
-      onPDF_openFile(IsSucceed, FilePath, PDFID, Extend) { // pdf 文件打开的回调
+      _render_pdfProblem (id) {
+        console.log(`id-------------${id}`)
+        this.getProblems(id).then(
+          (resp) => {
+            if (resp.data && resp.data.status == 200) {
+              // 初始化
+              this.problemMap = {};
+              this.xmlMap = {};
+              const regx = /<GUID>(.*?)<\/GUID>/g;
 
-        if (IsSucceed) {
-          this.getProblems(this.opinionForm.drawingNumber).then(
-            (resp) => {
-              if (resp.data && resp.data.status == 200) {
-                // 初始化svg数组
-                // alert(JSON.stringify(resp.data.result))
+              let xml_init = ''
 
-                const regx = /<GUID>(.*?)<\/GUID>/g;
+              resp.data.result.forEach(item => {
 
-                let xml_init = ''
+                xml_init += item.annotXml
+                let guid =  ''
 
-                resp.data.result.forEach(item => {
-
-                  xml_init += item.annotXml
-                  let guid =  ''
-
-                  item.annotXml.replace(regx, function(m, p) {
-                    guid = p
-                    return m
-                  })
-
-                  const { drawingX, drawingY, isHiddenDanger,
-                    problemType, problemSubMajor, dangerType, gbdescription,
-                    problemDescription, id,gbcaption,hiddenDangerReason
-                  } = item;
-
-
-                  this.problemMap[guid] = {
-                    isHiddenDanger,
-                    problemType, problemSubMajor, dangerType,  gbdescription,
-                    problemDescription,projectId:item.id,gbcaption,hiddenDangerReason
-                  }
-
-                  this.xmlMap[guid] = item.annotXml
-
+                item.annotXml && item.annotXml.replace(regx, function(m, p) {
+                  guid = p
+                  return m
                 })
 
-                xml_init = `<root>${xml_init}</root>`;
-                this.pr.AddAnnot(3, xml_init, "");
+                const { drawingX, drawingY, isHiddenDanger,
+                  problemType, problemSubMajor, dangerType, gbdescription,
+                  problemDescription, id,gbcaption,hiddenDangerReason
+                } = item;
 
-              } else {
-                alert('getProblems fail')
-                console.log('getProblems fail');
-              }
-            },
-            (err) => {
-              alert('getProblems fail')
+
+                this.problemMap[guid] = {
+                  isHiddenDanger,
+                  problemType, problemSubMajor, dangerType,  gbdescription,
+                  problemDescription,projectId:item.id,gbcaption,hiddenDangerReason
+                }
+
+                this.xmlMap[guid] = item.annotXml
+
+              })
+
+              xml_init = `<root>${xml_init}</root>`;
+              this.pr.AddAnnot(3, xml_init, "");
+
+            } else {
               console.log('getProblems fail');
-              console.log(err);
             }
-          );
+          },
+          (err) => {
+            console.log('getProblems fail');
+            console.log(err);
+          }
+        );
+      },
+      onPDF_openFile(IsSucceed, FilePath, PDFID, Extend) { // pdf 文件打开的回调
+        if (IsSucceed) {
+          this._render_pdfProblem(this.opinionForm.drawingNumber)
         }
       },
       onPDF_selectAnnot(ZSGuid, ZSType, Extend) { // pdf 注释选择后的回调
@@ -598,7 +608,7 @@
         this.pr.SetToolboxShow(false);
         this.opinion_show = true;
         this.activeGUID = ZSGuid;
-        // this.PDF_onlyReader(true);
+        this.PDF_onlyReader(true);
       },
       onPDF_closeFile(IsSucceed,FilePath,PDFID,Extend) { // pdf 文件关闭回调
         this.opinion_show = false;
@@ -736,8 +746,10 @@
 			pdfset(data){
         if (data.readOnly) {
           window.noDrawing = true;
+          this.noDrawing = true;
         } else {
           window.noDrawing = false;
+          this.noDrawing = false;
         }
 				// window.noDrawing = false;
 
@@ -837,11 +849,12 @@
 									this.problemSave(data).then(
 										(resp) => {
                       alert(JSON.stringify(resp))
+
 											this.resetForm('opinionForm');
                       pr.SetToolboxShow(true);
                       this.opinion_show = false;
                       this.activeGUID = '';
-                      // this.PDF_onlyReader(false);
+                      this.PDF_onlyReader(false);
 											this.getzhengd();
 										},
 										(err) => {
@@ -849,7 +862,7 @@
                       pr.SetToolboxShow(true);
                       this.opinion_show = false;
                       this.activeGUID = '';
-                      // this.PDF_onlyReader(false);
+                      this.PDF_onlyReader(false);
 										}
 									);
 								}else{
@@ -860,7 +873,7 @@
                       pr.SetToolboxShow(true);
                       this.opinion_show = false;
                       this.activeGUID = '';
-                      // this.PDF_onlyReader(false);
+                      this.PDF_onlyReader(false);
 					            this.getzhengd();
 										},
 										(err) => {
@@ -868,7 +881,7 @@
                       pr.SetToolboxShow(true);
                       this.opinion_show = false;
                       this.activeGUID = '';
-                      // this.PDF_onlyReader(false);
+                      this.PDF_onlyReader(false);
 										}
 									);
 								}
@@ -886,12 +899,12 @@
           return this.findParentID(node.parent);
         }
       },
-			getpdfdetail(id){
-			this.pdf_show = true;
-			this.$nextTick(()=>{
-				this.$refs['box5'].getpdfdetail(id)
-				})
-			},
+			// getpdfdetail(id){
+			// this.pdf_show = true;
+			// this.$nextTick(()=>{
+			// 	this.$refs['box5'].getpdfdetail(id)
+			// 	})
+			// },
 			getProfession(name){
 				this.$http.get(this.url.getProfession+'?profession='+name).then(res=>{
 					this.problemSubMajorOptions = res.body.result
@@ -925,12 +938,12 @@
 				}).catch(()=>{})
 			},
       selectTreeID(data, node, self){
-
-				if(data.children&&data.children.length&&data.children[0].profession){
-					this.getpdfdetail(data.children[0].id)
-				}else{
-					this.pdf_show = false
-				};
+				// if(data.children&&data.children.length&&data.children[0].profession){
+				// 	this.getpdfdetail(data.children[0].id)
+				// }else{
+				// 	this.pdf_show = false
+				// };
+				    console.log(node)
         this.clickedNodeData = data;
 				if(data.children && data.children.length && data.children[0].type == 'archive'){
 					this.clickedNodeData.checkOnReson = data.children[0].checkOnReson
@@ -942,7 +955,7 @@
 				};
         // this.disabled = true;
         if(data.type&&data.type == "archive"){
-					data.readOnly?this.noDrawing = false :this.noDrawing = true;
+					data.readOnly?this.noDrawing = true :this.noDrawing = false;
 					this.showpost = false
           this.saveID = data.id;
         }else{
@@ -958,16 +971,15 @@
 				if(data.url){ // pdf
           this.saveID = this.findParentID(node);
           this.currpdf_parentid = this.findParentID(node);
+          // data.readOnly?this.noDrawing = true :this.noDrawing = false;
           if (node.parent.data.readOnly) {
-            window.noDrawing = true;
+            this.noDrawing = true
           } else {
-            window.noDrawing = false;
+            this.noDrawing = false
           }
-					// window.noDrawing = false;
-
+          this.PDFReader_show = true;
           this.opinionForm.drawingNumber = data.id;
           this.showInfo = true;
-
           this.currpdf_name = data.name;
           this.PDFOpenFile({pdfurl: window.encodeURIComponent(data.url), pdfname: this.currpdf_name})
 				}
